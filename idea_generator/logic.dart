@@ -26,16 +26,20 @@ class Activity {
 }
 
 class ActivityProvider extends ChangeNotifier {
-  List<Activity> _cards = [];
+  List<Activity> _cards = []; 
+  List<Activity> _favorites = []; 
   bool isLoading = true;
 
   List<Activity> get cards => _cards;
+  List<Activity> get favorites => _favorites;
 
   ActivityProvider() {
     _init();
   }
 
   Future<void> _init() async {
+    await _loadFavorites();
+    
     await fetchActivitiesBatch();
   }
 
@@ -60,6 +64,42 @@ class ActivityProvider extends ChangeNotifier {
       );
     }
     isLoading = false;
+    notifyListeners();
+  }
+
+  void likeActivity(int index) {
+    if (index < _cards.length) {
+      final item = _cards[index];
+      // Проверка на дубликаты
+      if (!_favorites.any((element) => element.key == item.key)) {
+        _favorites.add(item);
+        _saveFavorites();
+        notifyListeners();
+      }
+    }
+  }
+
+  void removeFavorite(Activity item) {
+    _favorites.removeWhere((element) => element.key == item.key);
+    _saveFavorites();
+    notifyListeners();
+  }
+
+  Future<void> _saveFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = json.encode(
+      _favorites.map((e) => e.toJson()).toList(),
+    );
+    await prefs.setString('favorites', encoded);
+  }
+
+  Future<void> _loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? encoded = prefs.getString('favorites');
+    if (encoded != null) {
+      final List<dynamic> decoded = json.decode(encoded);
+      _favorites = decoded.map((e) => Activity.fromJson(e)).toList();
+    }
     notifyListeners();
   }
 }

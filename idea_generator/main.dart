@@ -64,6 +64,7 @@ class HomeScreen extends StatelessWidget {
                     },
                     onSwipe: (previousIndex, currentIndex, direction) {
                       if (direction == CardSwiperDirection.right) {
+                        provider.likeActivity(previousIndex);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Saved to favorites!"), duration: Duration(milliseconds: 500)),
                         );
