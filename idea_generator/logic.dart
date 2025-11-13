@@ -24,3 +24,42 @@ class Activity {
     'key': key,
   };
 }
+
+class ActivityProvider extends ChangeNotifier {
+  List<Activity> _cards = [];
+  bool isLoading = true;
+
+  List<Activity> get cards => _cards;
+
+  ActivityProvider() {
+    _init();
+  }
+
+  Future<void> _init() async {
+    await fetchActivitiesBatch();
+  }
+
+  Future<void> fetchActivitiesBatch() async {
+    try {
+      for (int i = 0; i < 5; i++) {
+        final response = await http.get(
+          Uri.parse('https://bored-api.appbrewery.com/random'),
+        );
+        if (response.statusCode == 200) {
+          _cards.add(Activity.fromJson(json.decode(response.body)));
+        }
+      }
+    } catch (e) {
+      print("Error fetching: $e");
+      _cards.add(
+        Activity(
+          activity: "Check your internet connection",
+          type: "System",
+          key: "err",
+        ),
+      );
+    }
+    isLoading = false;
+    notifyListeners();
+  }
+}
